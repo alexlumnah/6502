@@ -18,14 +18,13 @@ all: dir main test
 main: $(OBJ)
 	$(CC) -o $(BIN)/main $^
 
-test: $(TEST_OBJ) src/cpu.o
+test: $(TEST_OBJ) src/cpu.o src/opcode.o
 	$(CC) -o $(BIN)/test $^
 
 dir:
 	mkdir -p ./$(BIN)
 
 %.o: %.c
-	echo "testing"
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:

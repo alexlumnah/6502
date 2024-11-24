@@ -10,6 +10,9 @@ typedef struct {
     byte num_cycles;
 } Opcode;
 
+// Helper Functions
+word read_word(byte *mem, word addr);
+
 // Addressing Modes
 byte acc(Cpu *cpu, byte *mem);	// Accumulator
 byte aba(Cpu *cpu, byte *mem);	// Absolute Address

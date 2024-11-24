@@ -1,89 +1,168 @@
 #include <assert.h>
+#include <stdio.h>
 
 #include "opcode.h"
+
+// Helper Functions
+// Read word from memory - little-endian
+word read_word(byte *mem, word addr) {
+
+    // Little-endian format
+    return mem[addr] + (mem[addr + 1] << 8);
+
+}
 
 // Addressing Modes
 // Accumulator
 byte acc(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Return value stored in accumulator
+    return cpu->a;
 }
 
 // Absolute Address
 byte aba(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Get address from next two bytes
+    word addr = read_word(mem, cpu->p);
+    cpu->p += 2;
+
+    // Return value stored at this address
+    return mem[addr];
 }
 
 // Absolute, X-indexed
 byte abx(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Get address from next two bytes
+    word addr = read_word(mem, cpu->p);
+    cpu->p += 2;
+
+    // Index address by the x register
+    addr += cpu->x;
+
+    return mem[addr];
 }
 
 // Absolute, Y-indexed
 byte aby(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Get address from next two bytes
+    word addr = read_word(mem, cpu->p);
+    cpu->p += 2;
+
+    // Index address by the x register
+    addr += cpu->y;
+
+    return mem[addr];
 }
 
 // Immediate
 byte imm(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Opcode is next immediate byte
+    byte op = mem[cpu->p];
+    cpu->p++;
+
+    return op;
 }
 
 // Implied
 byte imp(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+    
+    // Opcode is implied by the instruction
+    // Frequently used by the accumulator
+    return cpu->a;
 }
 
 // Indirect
 byte ind(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+    
+    // Next two bytes are a pointer to an address
+    word ptr = read_word(mem, cpu->p);
+    cpu->p += 2;
+    word addr = read_word(mem, ptr);
+
+    return mem[addr];
 }
 
 // X-indexed, Indirect
 byte xin(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Zero page contains a table of addresses
+    // Address of table is next byte
+    // Z register is added to it
+    byte addr = mem[cpu->p];
+    cpu->p++;
+
+    addr += cpu->x;
+
+    return mem[(word)addr];
 }
 
 // Indirect, Y-indexed
 byte yin(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+    
+    // Pointer to first byte of 16-bit address
+    word ptr = (word)mem[cpu->p];
+    cpu->p++;
+    word addr = read_word(mem, ptr);
+
+    // Index with y-register
+    addr += cpu->y;
+
+    return mem[addr];
 }
 
 // Relative
 byte rel(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Next byte contains an offset
+    int8_t offset = mem[cpu->p];
+    cpu->p++;
+    word addr = cpu->p + offset;
+
+    return mem[addr];
 }
 
 // Zero Page
 byte zpg(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Next byte contains location on zero page
+    word addr = mem[cpu->p];
+    cpu->p++;
+
+    return mem[addr];
 }
 
 // Zero Page, X-Indexed
 byte zpx(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Next byte contains location on zero page
+    word addr = mem[cpu->p];
+    cpu->p++;
+
+    // Indexed by x-register
+    addr += cpu->x;
+
+    return mem[addr];
 }
 
 // Zero Page, Y-indexed
 byte zpy(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
-    return 0;
+
+    // Next byte contains location on zero page
+    word addr = mem[cpu->p];
+    cpu->p++;
+
+    // Indexed by y-register
+    addr += cpu->y;
+
+    return mem[addr];
 }
 
-// Zero Page, Y-indexed
+// Null Addressing Mode - invalid opcode
 byte xad(Cpu *cpu, byte *mem) {
-    assert("addressing mode not yet implemented" && false);
     return 0;
 }
 
@@ -91,327 +170,327 @@ byte xad(Cpu *cpu, byte *mem) {
 // Instructions
 // test and reset bits with acc
 void trb(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'trb' not yet implemented\n");
 }
 
 // push index Y on stack
 void phy(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'phy' not yet implemented\n");
 }
 
 // push index X on stack
 void phx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'phx' not yet implemented\n");
 }
 
 // pull index Y from stack
 void ply(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'ply' not yet implemented\n");
 }
 
 // pull index X from stack
 void plx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'plx' not yet implemented\n");
 }
 
 // store zero in memory
 void stz(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'stz' not yet implemented\n");
 }
 
 // branch always
 void bra(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bra' not yet implemented\n");
 }
 
 // add with carry
 void adc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'adc' not yet implemented\n");
 }
 
 // and (with accumulator)
 void and(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'and' not yet implemented\n");
 }
 
 // arithmetic shift left
 void asl(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'asl' not yet implemented\n");
 }
 
 // branch on carry clear
 void bcc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bcc' not yet implemented\n");
 }
 
 // branch on carry set
 void bcs(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bcs' not yet implemented\n");
 }
 
 // branch on equal (zero set)
 void beq(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'beq' not yet implemented\n");
 }
 
 // bit test
 void bit(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bit' not yet implemented\n");
 }
 
 // branch on minus (negative set)
 void bmi(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bmi' not yet implemented\n");
 }
 
 // branch on not equal (zero clear)
 void bne(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bne' not yet implemented\n");
 }
 
 // branch on plus (negative clear)
 void bpl(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bpl' not yet implemented\n");
 }
 
 // break / interrupt
 void brk(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'brk' not yet implemented\n");
 }
 
 // branch on overflow clear
 void bvc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bvc' not yet implemented\n");
 }
 
 // branch on overflow set
 void bvs(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'bvs' not yet implemented\n");
 }
 
 // clear carry
 void clc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'clc' not yet implemented\n");
 }
 
 // clear decimal
 void cld(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'cld' not yet implemented\n");
 }
 
 // clear interrupt disable
 void cli(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'cli' not yet implemented\n");
 }
 
 // clear overflow
 void clv(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'clv' not yet implemented\n");
 }
 
 // compare (with accumulator)
 void cmp(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'cmp' not yet implemented\n");
 }
 
 // compare with X
 void cpx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'cpx' not yet implemented\n");
 }
 
 // compare with Y
 void cpy(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'cpy' not yet implemented\n");
 }
 
 // decrement
 void dec(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'dec' not yet implemented\n");
 }
 
 // decrement X
 void dex(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'dex' not yet implemented\n");
 }
 
 // decrement Y
 void dey(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'dey' not yet implemented\n");
 }
 
 // exclusive or (with accumulator)
 void eor(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'eor' not yet implemented\n");
 }
 
 // increment
 void inc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'inc' not yet implemented\n");
 }
 
 // increment X
 void inx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'inx' not yet implemented\n");
 }
 
 // increment Y
 void iny(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'iny' not yet implemented\n");
 }
 
 // jump
 void jmp(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'jmp' not yet implemented\n");
 }
 
 // jump subroutine
 void jsr(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'jsr' not yet implemented\n");
 }
 
 // load accumulator
 void lda(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'lda' not yet implemented\n");
 }
 
 // load X
 void ldx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'ldx' not yet implemented\n");
 }
 
 // load Y
 void ldy(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'ldy' not yet implemented\n");
 }
 
 // logical shift right
 void lsr(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'lsr' not yet implemented\n");
 }
 
 // no operation
 void nop(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'nop' not yet implemented\n");
 }
 
 // or with accumulator
 void ora(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'ora' not yet implemented\n");
 }
 
 // push accumulator
 void pha(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'pha' not yet implemented\n");
 }
 
 // push processor status (SR)
 void php(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'php' not yet implemented\n");
 }
 
 // pull accumulator
 void pla(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'pla' not yet implemented\n");
 }
 
 // pull processor status (SR)
 void plp(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'plp' not yet implemented\n");
 }
 
 // rotate left
 void rol(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'rol' not yet implemented\n");
 }
 
 // rotate right
 void ror(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'ror' not yet implemented\n");
 }
 
 // return from interrupt
 void rti(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'rti' not yet implemented\n");
 }
 
 // return from subroutine
 void rts(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'rts' not yet implemented\n");
 }
 
 // subtract with carry
 void sbc(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sbc' not yet implemented\n");
 }
 
 // set carry
 void sec(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sec' not yet implemented\n");
 }
 
 // set decimal
 void sed(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sed' not yet implemented\n");
 }
 
 // set interrupt disable
 void sei(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sei' not yet implemented\n");
 }
 
 // store accumulator
 void sta(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sta' not yet implemented\n");
 }
 
 // store X
 void stx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'stx' not yet implemented\n");
 }
 
 // store Y
 void sty(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'sty' not yet implemented\n");
 }
 
 // transfer accumulator to X
 void tax(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'tax' not yet implemented\n");
 }
 
 // transfer accumulator to Y
 void tay(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'tay' not yet implemented\n");
 }
 
 // test and set memory bits with ac
 void tsb(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'tsb' not yet implemented\n");
 }
 
 // transfer stack pointer to X
 void tsx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'tsx' not yet implemented\n");
 }
 
 // transfer X to accumulator
 void txa(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'txa' not yet implemented\n");
 }
 
 // transfer X to stack pointer
 void txs(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'txs' not yet implemented\n");
 }
 
 // transfer Y to accumulator
 void tya(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'tya' not yet implemented\n");
 }
 
 // null function
 void xxx(Cpu *cpu, byte *mem, byte op) {
-    assert("instruction not yet implemented" && false);
+    //printf("Instruction 'xxx' not yet implemented\n");
 }
 
 const Opcode opcodes[256] = {
