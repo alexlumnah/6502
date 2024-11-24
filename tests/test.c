@@ -75,7 +75,7 @@ bool check_state(Cpu *cpu, byte *mem, cJSON *state, bool verbose) {
 		pass = 0;
 		if(verbose) {
 			printf("Unexpected F Register. State: %d, Expected: %d\n",
-					cpu->y, cJSON_GetObjectItem(state, "y")->valueint);
+					cpu->f, cJSON_GetObjectItem(state, "p")->valueint);
 
             // Now determine which flags are off
             int f = (byte) cJSON_GetObjectItem(state, "p")->valueint;

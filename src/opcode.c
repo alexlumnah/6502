@@ -9,7 +9,30 @@ word read_word(byte *mem, word addr) {
 
     // Little-endian format
     return mem[addr] + (mem[addr + 1] << 8);
+}
 
+// Read word from zp memory (wrap around at boundary) - little endian
+word read_word_zp(byte *mem, word addr) {
+
+    // Little-endian format
+    return mem[addr % 256] + (mem[(addr + 1) % 256] << 8);
+}
+
+// Set N, Z Flags
+void nz_flags(Cpu *cpu, byte reg) {
+
+    if (reg == 0) {
+        SET_FLAG(cpu->f, FLG_Z);
+    } else {
+        CLR_FLAG(cpu->f, FLG_Z);
+    }
+
+
+    if (SIGN(reg) == 1) {
+        SET_FLAG(cpu->f, FLG_N);
+    } else {
+        CLR_FLAG(cpu->f, FLG_N);
+    }
 }
 
 // Addressing Modes
@@ -91,13 +114,16 @@ byte xin(Cpu *cpu, byte *mem) {
 
     // Zero page contains a table of addresses
     // Address of table is next byte
-    // Z register is added to it
-    byte addr = mem[cpu->p];
+    // X register is added to it
+    byte ptr = mem[cpu->p];
     cpu->p++;
 
-    addr += cpu->x;
+    // Index by X register
+    ptr += cpu->x;
 
-    return mem[(word)addr];
+    word addr = read_word_zp(mem, ptr);
+
+    return mem[addr];
 }
 
 // Indirect, Y-indexed
@@ -106,7 +132,7 @@ byte yin(Cpu *cpu, byte *mem) {
     // Pointer to first byte of 16-bit address
     word ptr = (word)mem[cpu->p];
     cpu->p++;
-    word addr = read_word(mem, ptr);
+    word addr = read_word_zp(mem, ptr);
 
     // Index with y-register
     addr += cpu->y;
@@ -143,7 +169,7 @@ byte zpx(Cpu *cpu, byte *mem) {
     cpu->p++;
 
     // Indexed by x-register
-    addr += cpu->x;
+    addr = (addr + cpu->x) % 256;
 
     return mem[addr];
 }
@@ -156,7 +182,7 @@ byte zpy(Cpu *cpu, byte *mem) {
     cpu->p++;
 
     // Indexed by y-register
-    addr += cpu->y;
+    addr = (addr + cpu->y) % 256;
 
     return mem[addr];
 }
@@ -205,12 +231,77 @@ void bra(Cpu *cpu, byte *mem, byte op) {
 
 // add with carry
 void adc(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'adc' not yet implemented\n");
+
+    // Calculate binary sum for both modes, set N and Z flags
+    byte carry = GET_FLAG(cpu->f, FLG_C);
+    byte sum = cpu->a + op + carry;
+    nz_flags(cpu, sum);
+    
+    // Binary Mode
+    if (GET_FLAG(cpu->f, FLG_D) == 0) {
+
+        // Carry Flag - Set if sum is smaller than either operand
+        if (sum < cpu->a || sum < op) {
+            SET_FLAG(cpu->f, FLG_C);
+        } else {
+            CLR_FLAG(cpu->f, FLG_C);
+        }
+
+        // Overflow Flag - set if adding two numbers of the same sign
+        // and the sign of the result does not match
+        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(cpu->a) != SIGN(sum))) {
+            SET_FLAG(cpu->f, FLG_V);
+        } else {
+            CLR_FLAG(cpu->f, FLG_V);
+        }
+
+        // Store Results
+        cpu->a = sum;
+
+    // BCD Mode
+    } else { 
+
+        // Operate on lo and hi nibble separately
+        byte lo = (cpu->a & 0x0f) + (op & 0x0f) + carry;
+        byte hi = (((cpu->a & 0xf0) >> 4) + ((op & 0xf0) >> 4));
+
+        // Carry from low nibble to hi, if lo > 9
+        if (lo > 9) {
+            lo -= 10;
+            hi += 1;
+        }
+
+        // 6502 Idiosyncracy - N and V flags set on intermediate result 
+        byte int_res = (hi << 4) + (lo & 0x0f);
+        if (SIGN(int_res) == 1) {
+            SET_FLAG(cpu->f, FLG_N);
+        } else {
+            CLR_FLAG(cpu->f, FLG_N);
+        }
+        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(op) != SIGN(int_res))) {
+            SET_FLAG(cpu->f, FLG_V);
+        } else {
+            CLR_FLAG(cpu->f, FLG_V);
+        }
+
+        // Correct overflow in hi nibble
+        if (hi > 9) {
+            hi -= 10;
+            SET_FLAG(cpu->f, FLG_C);
+        } else {
+            CLR_FLAG(cpu->f, FLG_C);
+        }
+
+        // Store result
+        cpu->a = (hi << 4) + (lo & 0x0f);
+    }
 }
 
 // and (with accumulator)
 void and(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'and' not yet implemented\n");
+    
+    cpu->a = cpu->a & op;
+    nz_flags(cpu, cpu->a);
 }
 
 // arithmetic shift left
@@ -421,6 +512,7 @@ void rts(Cpu *cpu, byte *mem, byte op) {
 // subtract with carry
 void sbc(Cpu *cpu, byte *mem, byte op) {
     //printf("Instruction 'sbc' not yet implemented\n");
+    // REMEMBER BCD Mode
 }
 
 // set carry
@@ -511,4 +603,62 @@ const Opcode opcodes[256] = {
 	{&cpx, &imm, 5},{&sbc, &xin, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&cpx, &zpg, 5},{&sbc, &zpg, 5},{&inc, &zpg, 5},{&xxx, &xad, 0},{&inx, &imp, 5},{&sbc, &imm, 5},{&nop, &imp, 5},{&xxx, &xad, 0},{&cpx, &aba, 5},{&sbc, &aba, 5},{&inc, &aba, 5},{&xxx, &xad, 0},
 	{&beq, &rel, 5},{&sbc, &yin, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&xxx, &xad, 0},{&sbc, &zpx, 5},{&inc, &zpx, 5},{&xxx, &xad, 0},{&sed, &imp, 5},{&sbc, &aby, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&xxx, &xad, 0},{&sbc, &abx, 5},{&inc, &abx, 5},{&xxx, &xad, 0}
 };
+
+/*
+   
+        byte carry = GET_FLAG(cpu->f, FLG_C);
+        // N and Z flags are set based on the binary addition
+        byte binary_add = cpu->a + op + carry;
+        if (binary_add == 0) {
+            SET_FLAG(cpu->f, FLG_Z);
+        } else {
+            CLR_FLAG(cpu->f, FLG_Z);
+        }
+        nz_flags(cpu, binary_add);
+
+        // Carry from low nibble to hi, if lo > 9
+        byte lo = (cpu->a & 0x0f) + (op & 0x0f) + carry;
+        byte hi = (cpu->a & 0xf0) + (op & 0xf0); 
+
+        if (lo > 0x09) {
+            hi += 0x10;
+            lo += 0x06;
+        }
+
+        // Now set N and V flags
+        if (SIGN(hi) == 1) {
+            SET_FLAG(cpu->f, FLG_N);
+        } else {
+            CLR_FLAG(cpu->f, FLG_N);
+        }
+        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(op) != SIGN(hi))) {
+            SET_FLAG(cpu->f, FLG_V);
+        } else {
+            CLR_FLAG(cpu->f, FLG_V);
+        }
+
+        if (hi > 0x90) hi += 0x60;
+
+        // Add least significant and most significant nibbles
+        byte lsn = (cpu->a & 0x0f) + (op & 0x0f) + carry;
+        byte msn = (((cpu->a & 0xf0) >> 4) + ((op & 0xf0) >> 4));
+
+        // Carry from low nibble to high
+        if (lsn > 9) {
+            lsn = (lsn + 0x06) & 0x0f;
+            msn += 1;
+        }
+
+        // Determine carry for high nibble
+        if (msn > 9) {
+            msn = (msn + 0x6) & 0x0f;
+            SET_FLAG(cpu->f, FLG_C);
+        } else {
+            CLR_FLAG(cpu->f, FLG_C);
+        }
+
+        // Store Result
+        cpu->a = (msn << 4) + lsn;
+
+        */
 

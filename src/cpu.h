@@ -22,9 +22,12 @@
 #define FLG_N (7)   // Negative Flag   (1 = Result Negative)
 
 // Status Flag Get/Set/Cear Macros
-#define GET_FLAG(reg, flag) ((reg & flag) >> flag)
-#define SET_FLAG(reg, flag) ((reg |= (1 << flag))
-#define CLR_FLAG(reg, flag) ((reg &= ~(1 << flag))
+#define GET_FLAG(reg, flag) ((reg & (1 << flag)) >> flag)
+#define SET_FLAG(reg, flag) (reg |=  (1 << flag))
+#define CLR_FLAG(reg, flag) (reg &= ~(1 << flag))
+
+// Other Useful Macros
+#define SIGN(byte) (byte >> 7)
 
 // Status Flag Bit Masks
 #define MSK_C (1 << FLG_C)

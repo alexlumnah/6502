@@ -45,12 +45,12 @@ bool exec(Cpu *cpu, byte *mem) {
 void dump_cpu(Cpu *cpu) {
     printf("CPU = {\n");
     printf("  Registers:\n");
-    printf("    [PC] = 0x%02x\n", cpu->p);
-    printf("    [AC] = 0x%02x\n", cpu->a);
-    printf("    [XR] = 0x%02x\n", cpu->x);
-    printf("    [YR] = 0x%02x\n", cpu->y);
-    printf("    [SP] = 0x%02x\n", cpu->s);
-    printf("    [SR] = 0x%02x\n", cpu->f);
+    printf("    [PC] = 0x%04x - %d\n", cpu->p, cpu->p);
+    printf("    [AC] =   0x%02x - %d\n", cpu->a, cpu->a);
+    printf("    [XR] =   0x%02x - %d\n", cpu->x, cpu->x);
+    printf("    [YR] =   0x%02x - %d\n", cpu->y, cpu->y);
+    printf("    [SP] =   0x%02x - %d\n", cpu->s, cpu->s);
+    printf("    [SR] =   0x%02x - %d\n", cpu->f, cpu->f);
     printf("  Flags:\n");
     printf("    [C] -> %d\n", GET_FLAG(cpu->f, FLG_C));
     printf("    [Z] -> %d\n", GET_FLAG(cpu->f, FLG_Z));
