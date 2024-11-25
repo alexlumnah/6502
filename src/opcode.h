@@ -31,13 +31,6 @@ void xad(Cpu *cpu, byte *mem);	// Zero Page, Y-indexed
 
 
 // Instructions
-void trb(Cpu *cpu, byte *mem); // test and reset bits with acc
-void phy(Cpu *cpu, byte *mem); // push index Y on stack
-void phx(Cpu *cpu, byte *mem); // push index X on stack
-void ply(Cpu *cpu, byte *mem); // pull index Y from stack
-void plx(Cpu *cpu, byte *mem); // pull index X from stack
-void stz(Cpu *cpu, byte *mem); // store zero in memory
-void bra(Cpu *cpu, byte *mem); // branch always
 void adc(Cpu *cpu, byte *mem); // add with carry
 void and(Cpu *cpu, byte *mem); // and (with accumulator)
 void asl(Cpu *cpu, byte *mem); // arithmetic shift left

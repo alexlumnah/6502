@@ -5,12 +5,14 @@
 #include <stdbool.h>
 
 // Memory Size
-#define MEM_SIZE (0xffff)   // 16-bit Memory Addresses
+#define MEM_SIZE (0xffff + 1)   // 16-bit Memory Addresses
 
 // System Vectors
 #define VEC_NMI (0xfffa)    // Non-Maskable Interrupt Vector (16-bit)
 #define VEC_RES (0xfffc)    // Reset Vector (16-bit)
 #define VEC_IRQ (0xfffe)    // Interupt Request Vector (16-bit)
+
+#define STACK_TOP (0x0100)  // Top of stack
 
 // Status Flag Bits
 #define FLAG_C (0)   // Carry Flag      (1 = Carry True)
@@ -22,9 +24,9 @@
 #define FLAG_N (7)   // Negative Flag   (1 = Result Negative)
 
 // Status Flag Get/Set/Cear Macros
-#define GET_BIT(reg, flag) ((reg & (1 << flag)) >> flag)
-#define SET_BIT(reg, flag) (reg |=  (1 << flag))
-#define CLR_BIT(reg, flag) (reg &= ~(1 << flag))
+#define GET_BIT(reg, bit) ((reg & (1 << bit)) >> bit)
+#define SET_BIT(reg, bit) (reg |=  (1 << bit))
+#define CLR_BIT(reg, bit) (reg &= ~(1 << bit))
 
 // Other Useful Macros
 #define SIGN(byte) (byte >> 7)

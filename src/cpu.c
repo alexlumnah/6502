@@ -50,13 +50,13 @@ void dump_cpu(Cpu *cpu) {
     printf("    [SP] =   0x%02x - %d\n", cpu->s, cpu->s);
     printf("    [SR] =   0x%02x - %d\n", cpu->f, cpu->f);
     printf("  Flags:\n");
-    printf("    [C] -> %d\n", GET_FLAG(cpu->f, FLAG_C));
-    printf("    [Z] -> %d\n", GET_FLAG(cpu->f, FLAG_Z));
-    printf("    [I] -> %d\n", GET_FLAG(cpu->f, FLAG_I));
-    printf("    [D] -> %d\n", GET_FLAG(cpu->f, FLAG_D));
-    printf("    [B] -> %d\n", GET_FLAG(cpu->f, FLAG_B));
-    printf("    [V] -> %d\n", GET_FLAG(cpu->f, FLAG_V));
-    printf("    [N] -> %d\n", GET_FLAG(cpu->f, FLAG_N));
+    printf("    [C] -> %d\n", GET_BIT(cpu->f, FLAG_C));
+    printf("    [Z] -> %d\n", GET_BIT(cpu->f, FLAG_Z));
+    printf("    [I] -> %d\n", GET_BIT(cpu->f, FLAG_I));
+    printf("    [D] -> %d\n", GET_BIT(cpu->f, FLAG_D));
+    printf("    [B] -> %d\n", GET_BIT(cpu->f, FLAG_B));
+    printf("    [V] -> %d\n", GET_BIT(cpu->f, FLAG_V));
+    printf("    [N] -> %d\n", GET_BIT(cpu->f, FLAG_N));
     printf("  Cycle Count: %ld\n", cpu->cycles);
     printf("}\n");
 }

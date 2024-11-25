@@ -158,7 +158,7 @@ bool test_opcode(Cpu *cpu, byte *mem, char file[100], bool verbose) {
 
 	// Iterate over each test in the file
 	cJSON *item;
-	for(int i=0; i < numtests; i++){
+	for(int i = 0; i < numtests; i++){
 
 		// Grab test from json
 		item = cJSON_GetArrayItem(json, i);

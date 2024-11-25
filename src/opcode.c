@@ -8,7 +8,7 @@
 word read_word(byte *mem, word addr) {
 
     // Little-endian format
-    return mem[addr] + (mem[addr + 1] << 8);
+    return mem[addr] + (mem[(addr + 1) % MEM_SIZE] << 8);
 }
 
 // Read word from zp memory (wrap around at boundary) - little endian
@@ -111,7 +111,11 @@ void ind(Cpu *cpu, byte *mem) {
     cpu->p += 2;
 
     // Get address from the pointer
-    cpu->addr = read_word(mem, ptr);
+    // Indirect addressing mode works only on a single page
+    // If we cross a boundary, loop back to beginning of page
+    byte lo = (ptr & 0x00ff) + 1;
+    byte hi = (ptr & 0xff00) >> 8;
+    cpu->addr = mem[ptr] + (mem[(hi << 8) + lo] << 8);
     cpu->op = mem[cpu->addr];
 }
 
@@ -206,41 +210,6 @@ void xad(Cpu *cpu, byte *mem) {
 
 
 // Instructions
-// test and reset bits with acc
-void trb(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'trb' not yet implemented\n");
-}
-
-// push index Y on stack
-void phy(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'phy' not yet implemented\n");
-}
-
-// push index X on stack
-void phx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'phx' not yet implemented\n");
-}
-
-// pull index Y from stack
-void ply(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'ply' not yet implemented\n");
-}
-
-// pull index X from stack
-void plx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'plx' not yet implemented\n");
-}
-
-// store zero in memory
-void stz(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'stz' not yet implemented\n");
-}
-
-// branch always
-void bra(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'bra' not yet implemented\n");
-}
-
 // add with carry
 void adc(Cpu *cpu, byte *mem) {
 
@@ -402,97 +371,171 @@ void bne(Cpu *cpu, byte *mem) {
 
 // branch on plus (negative clear)
 void bpl(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'bpl' not yet implemented\n");
+
+    if (GET_BIT(cpu->f, FLAG_N) == 1)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // break / interrupt
 void brk(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'brk' not yet implemented\n");
+    
+    SET_BIT(cpu->f, FLAG_B);
+
+    // Push status and program counter
+    cpu->p++;
+    mem[STACK_TOP + cpu->s--] = (cpu->p & 0xff00) >> 8;
+    mem[STACK_TOP + cpu->s--] = (cpu->p & 0x00ff);
+    mem[STACK_TOP + cpu->s--] = cpu->f;
+
+    // Clear break flag and set interrupt disable
+    CLR_BIT(cpu->f, FLAG_B);
+    SET_BIT(cpu->f, FLAG_I);
+    
+    // Set program counter to interrupt vector
+    cpu->p = read_word(mem, VEC_IRQ);
 }
 
 // branch on overflow clear
 void bvc(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'bvc' not yet implemented\n");
+
+    if (GET_BIT(cpu->f, FLAG_V) == 0)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // branch on overflow set
 void bvs(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'bvs' not yet implemented\n");
+
+    if (GET_BIT(cpu->f, FLAG_V) == 1)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // clear carry
 void clc(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'clc' not yet implemented\n");
+
+    CLR_BIT(cpu->f, FLAG_C);
 }
 
 // clear decimal
 void cld(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'cld' not yet implemented\n");
+
+    CLR_BIT(cpu->f, FLAG_D);
 }
 
 // clear interrupt disable
 void cli(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'cli' not yet implemented\n");
+
+    CLR_BIT(cpu->f, FLAG_I);
 }
 
 // clear overflow
 void clv(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'clv' not yet implemented\n");
+
+    CLR_BIT(cpu->f, FLAG_V);
 }
 
 // compare (with accumulator)
 void cmp(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'cmp' not yet implemented\n");
+
+    byte result = cpu->a - cpu->op;
+
+    // Flags
+    nz_flags(cpu, result);
+    if (cpu->a >= cpu->op) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
 }
 
 // compare with X
 void cpx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'cpx' not yet implemented\n");
+
+    byte result = cpu->x - cpu->op;
+
+    // Flags
+    nz_flags(cpu, result);
+    if (cpu->x >= cpu->op) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
 }
 
 // compare with Y
 void cpy(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'cpy' not yet implemented\n");
+
+    byte result = cpu->y - cpu->op;
+
+    // Flags
+    nz_flags(cpu, result);
+    if (cpu->y >= cpu->op) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
 }
 
 // decrement
 void dec(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'dec' not yet implemented\n");
+
+    byte result = cpu->op - 1;
+    nz_flags(cpu, result);
+    mem[cpu->addr] = result;
 }
 
 // decrement X
 void dex(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'dex' not yet implemented\n");
+
+    byte result = cpu->x - 1;
+    nz_flags(cpu, result);
+    cpu->x = result;
 }
 
 // decrement Y
 void dey(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'dey' not yet implemented\n");
+
+    byte result = cpu->y - 1;
+    nz_flags(cpu, result);
+    cpu->y = result;
 }
 
 // exclusive or (with accumulator)
 void eor(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'eor' not yet implemented\n");
+
+    byte result = cpu->a ^ cpu->op;
+    nz_flags(cpu, result);
+    cpu->a = result;
 }
 
 // increment
 void inc(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'inc' not yet implemented\n");
+
+    byte result = cpu->op + 1;
+    nz_flags(cpu, result);
+    mem[cpu->addr] = result;
 }
 
 // increment X
 void inx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'inx' not yet implemented\n");
+
+    byte result = cpu->x + 1;
+    nz_flags(cpu, result);
+    cpu->x = result;
 }
 
 // increment Y
 void iny(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'iny' not yet implemented\n");
+
+    byte result = cpu->y + 1;
+    nz_flags(cpu, result);
+    cpu->y = result;
 }
 
 // jump
 void jmp(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'jmp' not yet implemented\n");
+
+    // Jump to absolute or indirect address
+    cpu->p = cpu->addr;
 }
 
 // jump subroutine
