@@ -22,95 +22,103 @@ word read_word_zp(byte *mem, word addr) {
 void nz_flags(Cpu *cpu, byte reg) {
 
     if (reg == 0) {
-        SET_FLAG(cpu->f, FLG_Z);
+        SET_BIT(cpu->f, FLAG_Z);
     } else {
-        CLR_FLAG(cpu->f, FLG_Z);
+        CLR_BIT(cpu->f, FLAG_Z);
     }
 
-
     if (SIGN(reg) == 1) {
-        SET_FLAG(cpu->f, FLG_N);
+        SET_BIT(cpu->f, FLAG_N);
     } else {
-        CLR_FLAG(cpu->f, FLG_N);
+        CLR_BIT(cpu->f, FLAG_N);
     }
 }
 
 // Addressing Modes
 // Accumulator
-byte acc(Cpu *cpu, byte *mem) {
+void acc(Cpu *cpu, byte *mem) {
+
+    cpu->impl = true;
 
     // Return value stored in accumulator
-    return cpu->a;
+    cpu->op = cpu->a;
 }
 
 // Absolute Address
-byte aba(Cpu *cpu, byte *mem) {
+void aba(Cpu *cpu, byte *mem) {
 
-    // Get address from next two bytes
-    word addr = read_word(mem, cpu->p);
+    cpu->impl = false;
+
+    // Get operand from address from next two bytes
+    cpu->addr = read_word(mem, cpu->p);
     cpu->p += 2;
-
-    // Return value stored at this address
-    return mem[addr];
+    cpu->op = mem[cpu->addr];
 }
 
 // Absolute, X-indexed
-byte abx(Cpu *cpu, byte *mem) {
+void abx(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Get address from next two bytes
-    word addr = read_word(mem, cpu->p);
+    cpu->addr = read_word(mem, cpu->p);
     cpu->p += 2;
 
     // Index address by the x register
-    addr += cpu->x;
-
-    return mem[addr];
+    cpu->addr += cpu->x;
+    cpu->op = mem[cpu->addr];
 }
 
 // Absolute, Y-indexed
-byte aby(Cpu *cpu, byte *mem) {
+void aby(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Get address from next two bytes
-    word addr = read_word(mem, cpu->p);
+    cpu->addr = read_word(mem, cpu->p);
     cpu->p += 2;
 
-    // Index address by the x register
-    addr += cpu->y;
-
-    return mem[addr];
+    // Index address by the y register
+    cpu->addr += cpu->y;
+    cpu->op = mem[cpu->addr];
 }
 
 // Immediate
-byte imm(Cpu *cpu, byte *mem) {
+void imm(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Opcode is next immediate byte
-    byte op = mem[cpu->p];
+    cpu->addr = cpu->p;
     cpu->p++;
-
-    return op;
+    cpu->op = mem[cpu->addr];
 }
 
 // Implied
-byte imp(Cpu *cpu, byte *mem) {
+void imp(Cpu *cpu, byte *mem) {
     
     // Opcode is implied by the instruction
-    // Frequently used by the accumulator
-    return cpu->a;
+    cpu->impl = true;
 }
 
 // Indirect
-byte ind(Cpu *cpu, byte *mem) {
+void ind(Cpu *cpu, byte *mem) {
     
+    cpu->impl = false;
+
     // Next two bytes are a pointer to an address
     word ptr = read_word(mem, cpu->p);
     cpu->p += 2;
-    word addr = read_word(mem, ptr);
 
-    return mem[addr];
+    // Get address from the pointer
+    cpu->addr = read_word(mem, ptr);
+    cpu->op = mem[cpu->addr];
 }
 
 // X-indexed, Indirect
-byte xin(Cpu *cpu, byte *mem) {
+void xin(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Zero page contains a table of addresses
     // Address of table is next byte
@@ -121,138 +129,143 @@ byte xin(Cpu *cpu, byte *mem) {
     // Index by X register
     ptr += cpu->x;
 
-    word addr = read_word_zp(mem, ptr);
-
-    return mem[addr];
+    // Get address from the pointer
+    cpu->addr = read_word_zp(mem, ptr);
+    cpu->op = mem[cpu->addr];
 }
 
 // Indirect, Y-indexed
-byte yin(Cpu *cpu, byte *mem) {
+void yin(Cpu *cpu, byte *mem) {
     
+    cpu->impl = false;
+
     // Pointer to first byte of 16-bit address
     word ptr = (word)mem[cpu->p];
     cpu->p++;
-    word addr = read_word_zp(mem, ptr);
+    cpu->addr = read_word_zp(mem, ptr);
 
     // Index with y-register
-    addr += cpu->y;
-
-    return mem[addr];
+    cpu->addr += cpu->y;
+    cpu->op = mem[cpu->addr];
 }
 
 // Relative
-byte rel(Cpu *cpu, byte *mem) {
+void rel(Cpu *cpu, byte *mem) {
 
-    // Next byte contains an offset
-    int8_t offset = mem[cpu->p];
+    cpu->impl = false;
+
+    // Next byte contains a signed offset
+    cpu->addr = cpu->p;
     cpu->p++;
-    word addr = cpu->p + offset;
-
-    return mem[addr];
+    cpu->op = mem[cpu->addr];
 }
 
 // Zero Page
-byte zpg(Cpu *cpu, byte *mem) {
+void zpg(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Next byte contains location on zero page
-    word addr = mem[cpu->p];
+    cpu->addr = mem[cpu->p];
     cpu->p++;
-
-    return mem[addr];
+    cpu->op = mem[cpu->addr];
 }
 
 // Zero Page, X-Indexed
-byte zpx(Cpu *cpu, byte *mem) {
+void zpx(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Next byte contains location on zero page
-    word addr = mem[cpu->p];
+    cpu->addr = mem[cpu->p];
     cpu->p++;
 
     // Indexed by x-register
-    addr = (addr + cpu->x) % 256;
-
-    return mem[addr];
+    cpu->addr = (cpu->addr + cpu->x) % 256;
+    cpu->op = mem[cpu->addr];
 }
 
 // Zero Page, Y-indexed
-byte zpy(Cpu *cpu, byte *mem) {
+void zpy(Cpu *cpu, byte *mem) {
+
+    cpu->impl = false;
 
     // Next byte contains location on zero page
-    word addr = mem[cpu->p];
+    cpu->addr = mem[cpu->p];
     cpu->p++;
 
     // Indexed by y-register
-    addr = (addr + cpu->y) % 256;
-
-    return mem[addr];
+    cpu->addr = (cpu->addr + cpu->y) % 256;
+    cpu->op = mem[cpu->addr];
 }
 
 // Null Addressing Mode - invalid opcode
-byte xad(Cpu *cpu, byte *mem) {
-    return 0;
+void xad(Cpu *cpu, byte *mem) {
+    assert("Invalid opcode\n");
 }
 
 
 // Instructions
 // test and reset bits with acc
-void trb(Cpu *cpu, byte *mem, byte op) {
+void trb(Cpu *cpu, byte *mem) {
     //printf("Instruction 'trb' not yet implemented\n");
 }
 
 // push index Y on stack
-void phy(Cpu *cpu, byte *mem, byte op) {
+void phy(Cpu *cpu, byte *mem) {
     //printf("Instruction 'phy' not yet implemented\n");
 }
 
 // push index X on stack
-void phx(Cpu *cpu, byte *mem, byte op) {
+void phx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'phx' not yet implemented\n");
 }
 
 // pull index Y from stack
-void ply(Cpu *cpu, byte *mem, byte op) {
+void ply(Cpu *cpu, byte *mem) {
     //printf("Instruction 'ply' not yet implemented\n");
 }
 
 // pull index X from stack
-void plx(Cpu *cpu, byte *mem, byte op) {
+void plx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'plx' not yet implemented\n");
 }
 
 // store zero in memory
-void stz(Cpu *cpu, byte *mem, byte op) {
+void stz(Cpu *cpu, byte *mem) {
     //printf("Instruction 'stz' not yet implemented\n");
 }
 
 // branch always
-void bra(Cpu *cpu, byte *mem, byte op) {
+void bra(Cpu *cpu, byte *mem) {
     //printf("Instruction 'bra' not yet implemented\n");
 }
 
 // add with carry
-void adc(Cpu *cpu, byte *mem, byte op) {
+void adc(Cpu *cpu, byte *mem) {
 
     // Calculate binary sum for both modes, set N and Z flags
-    byte carry = GET_FLAG(cpu->f, FLG_C);
-    byte sum = cpu->a + op + carry;
+    byte carry = GET_BIT(cpu->f, FLAG_C);
+    byte sum = cpu->a + cpu->op + carry;
     nz_flags(cpu, sum);
     
     // Binary Mode
-    if (GET_FLAG(cpu->f, FLG_D) == 0) {
+    if (GET_BIT(cpu->f, FLAG_D) == 0) {
 
         // Carry Flag - Set if sum is smaller than either operand
-        if (sum < cpu->a || sum < op) {
-            SET_FLAG(cpu->f, FLG_C);
+        if (sum < cpu->a || sum < cpu->op) {
+            SET_BIT(cpu->f, FLAG_C);
         } else {
-            CLR_FLAG(cpu->f, FLG_C);
+            CLR_BIT(cpu->f, FLAG_C);
         }
 
         // Overflow Flag - set if adding two numbers of the same sign
         // and the sign of the result does not match
-        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(cpu->a) != SIGN(sum))) {
-            SET_FLAG(cpu->f, FLG_V);
+        if ((SIGN(cpu->a) == SIGN(cpu->op)) &&
+            (SIGN(cpu->a) != SIGN(sum))) {
+            SET_BIT(cpu->f, FLAG_V);
         } else {
-            CLR_FLAG(cpu->f, FLG_V);
+            CLR_BIT(cpu->f, FLAG_V);
         }
 
         // Store Results
@@ -262,34 +275,35 @@ void adc(Cpu *cpu, byte *mem, byte op) {
     } else { 
 
         // Operate on lo and hi nibble separately
-        byte lo = (cpu->a & 0x0f) + (op & 0x0f) + carry;
-        byte hi = (((cpu->a & 0xf0) >> 4) + ((op & 0xf0) >> 4));
+        byte lo = (cpu->a & 0x0f) + (cpu->op & 0x0f) + carry;
+        byte hi = (((cpu->a & 0xf0) >> 4) + ((cpu->op & 0xf0) >> 4));
 
         // Carry from low nibble to hi, if lo > 9
         if (lo > 9) {
             lo -= 10;
-            hi += 1;
+            hi++;
         }
 
         // 6502 Idiosyncracy - N and V flags set on intermediate result 
         byte int_res = (hi << 4) + (lo & 0x0f);
         if (SIGN(int_res) == 1) {
-            SET_FLAG(cpu->f, FLG_N);
+            SET_BIT(cpu->f, FLAG_N);
         } else {
-            CLR_FLAG(cpu->f, FLG_N);
+            CLR_BIT(cpu->f, FLAG_N);
         }
-        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(op) != SIGN(int_res))) {
-            SET_FLAG(cpu->f, FLG_V);
+        if ((SIGN(cpu->a)  == SIGN(cpu->op)) &&
+            (SIGN(cpu->op) != SIGN(int_res))) {
+            SET_BIT(cpu->f, FLAG_V);
         } else {
-            CLR_FLAG(cpu->f, FLG_V);
+            CLR_BIT(cpu->f, FLAG_V);
         }
 
         // Correct overflow in hi nibble
         if (hi > 9) {
             hi -= 10;
-            SET_FLAG(cpu->f, FLG_C);
+            SET_BIT(cpu->f, FLAG_C);
         } else {
-            CLR_FLAG(cpu->f, FLG_C);
+            CLR_BIT(cpu->f, FLAG_C);
         }
 
         // Store result
@@ -298,290 +312,337 @@ void adc(Cpu *cpu, byte *mem, byte op) {
 }
 
 // and (with accumulator)
-void and(Cpu *cpu, byte *mem, byte op) {
+void and(Cpu *cpu, byte *mem) {
     
-    cpu->a = cpu->a & op;
+    cpu->a = cpu->a & cpu->op;
     nz_flags(cpu, cpu->a);
 }
 
 // arithmetic shift left
-void asl(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'asl' not yet implemented\n");
+void asl(Cpu *cpu, byte *mem) {
+
+    // Calculate result
+    byte result = cpu->op << 1;
+    
+    // Set flags
+    nz_flags(cpu, result);
+    if (cpu->op >> 7) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
+
+    // Store result
+    if (cpu->impl) {
+        cpu->a = result;
+    } else {
+        mem[cpu->addr] = result;
+    }
 }
 
 // branch on carry clear
-void bcc(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'bcc' not yet implemented\n");
+void bcc(Cpu *cpu, byte *mem) {
+    
+    if (GET_BIT(cpu->f, FLAG_C) == 0)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // branch on carry set
-void bcs(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'bcs' not yet implemented\n");
+void bcs(Cpu *cpu, byte *mem) {
+
+    if (GET_BIT(cpu->f, FLAG_C) == 1)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // branch on equal (zero set)
-void beq(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'beq' not yet implemented\n");
+void beq(Cpu *cpu, byte *mem) {
+
+    if (GET_BIT(cpu->f, FLAG_Z) == 1)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // bit test
-void bit(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'bit' not yet implemented\n");
+void bit(Cpu *cpu, byte *mem) {
+    
+    byte result = cpu->a & cpu->op;
+
+    // Set flags
+    if (result == 0) {
+        SET_BIT(cpu->f, FLAG_Z);
+    } else {
+        CLR_BIT(cpu->f, FLAG_Z);
+    }
+
+    if (GET_BIT(cpu->op, 6)) {
+        SET_BIT(cpu->f, FLAG_V);
+    } else {
+        CLR_BIT(cpu->f, FLAG_V);
+    }
+
+    if (SIGN(cpu->op)) {
+        SET_BIT(cpu->f, FLAG_N);
+    } else {
+        CLR_BIT(cpu->f, FLAG_N);
+    }
 }
 
 // branch on minus (negative set)
-void bmi(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'bmi' not yet implemented\n");
+void bmi(Cpu *cpu, byte *mem) {
+
+    if (GET_BIT(cpu->f, FLAG_N) == 1)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // branch on not equal (zero clear)
-void bne(Cpu *cpu, byte *mem, byte op) {
-    //printf("Instruction 'bne' not yet implemented\n");
+void bne(Cpu *cpu, byte *mem) {
+
+    if (GET_BIT(cpu->f, FLAG_Z) == 0)
+        cpu->p += (int8_t)cpu->op;
 }
 
 // branch on plus (negative clear)
-void bpl(Cpu *cpu, byte *mem, byte op) {
+void bpl(Cpu *cpu, byte *mem) {
     //printf("Instruction 'bpl' not yet implemented\n");
 }
 
 // break / interrupt
-void brk(Cpu *cpu, byte *mem, byte op) {
+void brk(Cpu *cpu, byte *mem) {
     //printf("Instruction 'brk' not yet implemented\n");
 }
 
 // branch on overflow clear
-void bvc(Cpu *cpu, byte *mem, byte op) {
+void bvc(Cpu *cpu, byte *mem) {
     //printf("Instruction 'bvc' not yet implemented\n");
 }
 
 // branch on overflow set
-void bvs(Cpu *cpu, byte *mem, byte op) {
+void bvs(Cpu *cpu, byte *mem) {
     //printf("Instruction 'bvs' not yet implemented\n");
 }
 
 // clear carry
-void clc(Cpu *cpu, byte *mem, byte op) {
+void clc(Cpu *cpu, byte *mem) {
     //printf("Instruction 'clc' not yet implemented\n");
 }
 
 // clear decimal
-void cld(Cpu *cpu, byte *mem, byte op) {
+void cld(Cpu *cpu, byte *mem) {
     //printf("Instruction 'cld' not yet implemented\n");
 }
 
 // clear interrupt disable
-void cli(Cpu *cpu, byte *mem, byte op) {
+void cli(Cpu *cpu, byte *mem) {
     //printf("Instruction 'cli' not yet implemented\n");
 }
 
 // clear overflow
-void clv(Cpu *cpu, byte *mem, byte op) {
+void clv(Cpu *cpu, byte *mem) {
     //printf("Instruction 'clv' not yet implemented\n");
 }
 
 // compare (with accumulator)
-void cmp(Cpu *cpu, byte *mem, byte op) {
+void cmp(Cpu *cpu, byte *mem) {
     //printf("Instruction 'cmp' not yet implemented\n");
 }
 
 // compare with X
-void cpx(Cpu *cpu, byte *mem, byte op) {
+void cpx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'cpx' not yet implemented\n");
 }
 
 // compare with Y
-void cpy(Cpu *cpu, byte *mem, byte op) {
+void cpy(Cpu *cpu, byte *mem) {
     //printf("Instruction 'cpy' not yet implemented\n");
 }
 
 // decrement
-void dec(Cpu *cpu, byte *mem, byte op) {
+void dec(Cpu *cpu, byte *mem) {
     //printf("Instruction 'dec' not yet implemented\n");
 }
 
 // decrement X
-void dex(Cpu *cpu, byte *mem, byte op) {
+void dex(Cpu *cpu, byte *mem) {
     //printf("Instruction 'dex' not yet implemented\n");
 }
 
 // decrement Y
-void dey(Cpu *cpu, byte *mem, byte op) {
+void dey(Cpu *cpu, byte *mem) {
     //printf("Instruction 'dey' not yet implemented\n");
 }
 
 // exclusive or (with accumulator)
-void eor(Cpu *cpu, byte *mem, byte op) {
+void eor(Cpu *cpu, byte *mem) {
     //printf("Instruction 'eor' not yet implemented\n");
 }
 
 // increment
-void inc(Cpu *cpu, byte *mem, byte op) {
+void inc(Cpu *cpu, byte *mem) {
     //printf("Instruction 'inc' not yet implemented\n");
 }
 
 // increment X
-void inx(Cpu *cpu, byte *mem, byte op) {
+void inx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'inx' not yet implemented\n");
 }
 
 // increment Y
-void iny(Cpu *cpu, byte *mem, byte op) {
+void iny(Cpu *cpu, byte *mem) {
     //printf("Instruction 'iny' not yet implemented\n");
 }
 
 // jump
-void jmp(Cpu *cpu, byte *mem, byte op) {
+void jmp(Cpu *cpu, byte *mem) {
     //printf("Instruction 'jmp' not yet implemented\n");
 }
 
 // jump subroutine
-void jsr(Cpu *cpu, byte *mem, byte op) {
+void jsr(Cpu *cpu, byte *mem) {
     //printf("Instruction 'jsr' not yet implemented\n");
 }
 
 // load accumulator
-void lda(Cpu *cpu, byte *mem, byte op) {
+void lda(Cpu *cpu, byte *mem) {
     //printf("Instruction 'lda' not yet implemented\n");
 }
 
 // load X
-void ldx(Cpu *cpu, byte *mem, byte op) {
+void ldx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'ldx' not yet implemented\n");
 }
 
 // load Y
-void ldy(Cpu *cpu, byte *mem, byte op) {
+void ldy(Cpu *cpu, byte *mem) {
     //printf("Instruction 'ldy' not yet implemented\n");
 }
 
 // logical shift right
-void lsr(Cpu *cpu, byte *mem, byte op) {
+void lsr(Cpu *cpu, byte *mem) {
     //printf("Instruction 'lsr' not yet implemented\n");
 }
 
 // no operation
-void nop(Cpu *cpu, byte *mem, byte op) {
+void nop(Cpu *cpu, byte *mem) {
     //printf("Instruction 'nop' not yet implemented\n");
 }
 
 // or with accumulator
-void ora(Cpu *cpu, byte *mem, byte op) {
+void ora(Cpu *cpu, byte *mem) {
     //printf("Instruction 'ora' not yet implemented\n");
 }
 
 // push accumulator
-void pha(Cpu *cpu, byte *mem, byte op) {
+void pha(Cpu *cpu, byte *mem) {
     //printf("Instruction 'pha' not yet implemented\n");
 }
 
 // push processor status (SR)
-void php(Cpu *cpu, byte *mem, byte op) {
+void php(Cpu *cpu, byte *mem) {
     //printf("Instruction 'php' not yet implemented\n");
 }
 
 // pull accumulator
-void pla(Cpu *cpu, byte *mem, byte op) {
+void pla(Cpu *cpu, byte *mem) {
     //printf("Instruction 'pla' not yet implemented\n");
 }
 
 // pull processor status (SR)
-void plp(Cpu *cpu, byte *mem, byte op) {
+void plp(Cpu *cpu, byte *mem) {
     //printf("Instruction 'plp' not yet implemented\n");
 }
 
 // rotate left
-void rol(Cpu *cpu, byte *mem, byte op) {
+void rol(Cpu *cpu, byte *mem) {
     //printf("Instruction 'rol' not yet implemented\n");
 }
 
 // rotate right
-void ror(Cpu *cpu, byte *mem, byte op) {
+void ror(Cpu *cpu, byte *mem) {
     //printf("Instruction 'ror' not yet implemented\n");
 }
 
 // return from interrupt
-void rti(Cpu *cpu, byte *mem, byte op) {
+void rti(Cpu *cpu, byte *mem) {
     //printf("Instruction 'rti' not yet implemented\n");
 }
 
 // return from subroutine
-void rts(Cpu *cpu, byte *mem, byte op) {
+void rts(Cpu *cpu, byte *mem) {
     //printf("Instruction 'rts' not yet implemented\n");
 }
 
 // subtract with carry
-void sbc(Cpu *cpu, byte *mem, byte op) {
+void sbc(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sbc' not yet implemented\n");
     // REMEMBER BCD Mode
 }
 
 // set carry
-void sec(Cpu *cpu, byte *mem, byte op) {
+void sec(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sec' not yet implemented\n");
 }
 
 // set decimal
-void sed(Cpu *cpu, byte *mem, byte op) {
+void sed(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sed' not yet implemented\n");
 }
 
 // set interrupt disable
-void sei(Cpu *cpu, byte *mem, byte op) {
+void sei(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sei' not yet implemented\n");
 }
 
 // store accumulator
-void sta(Cpu *cpu, byte *mem, byte op) {
+void sta(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sta' not yet implemented\n");
 }
 
 // store X
-void stx(Cpu *cpu, byte *mem, byte op) {
+void stx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'stx' not yet implemented\n");
 }
 
 // store Y
-void sty(Cpu *cpu, byte *mem, byte op) {
+void sty(Cpu *cpu, byte *mem) {
     //printf("Instruction 'sty' not yet implemented\n");
 }
 
 // transfer accumulator to X
-void tax(Cpu *cpu, byte *mem, byte op) {
+void tax(Cpu *cpu, byte *mem) {
     //printf("Instruction 'tax' not yet implemented\n");
 }
 
 // transfer accumulator to Y
-void tay(Cpu *cpu, byte *mem, byte op) {
+void tay(Cpu *cpu, byte *mem) {
     //printf("Instruction 'tay' not yet implemented\n");
 }
 
 // test and set memory bits with ac
-void tsb(Cpu *cpu, byte *mem, byte op) {
+void tsb(Cpu *cpu, byte *mem) {
     //printf("Instruction 'tsb' not yet implemented\n");
 }
 
 // transfer stack pointer to X
-void tsx(Cpu *cpu, byte *mem, byte op) {
+void tsx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'tsx' not yet implemented\n");
 }
 
 // transfer X to accumulator
-void txa(Cpu *cpu, byte *mem, byte op) {
+void txa(Cpu *cpu, byte *mem) {
     //printf("Instruction 'txa' not yet implemented\n");
 }
 
 // transfer X to stack pointer
-void txs(Cpu *cpu, byte *mem, byte op) {
+void txs(Cpu *cpu, byte *mem) {
     //printf("Instruction 'txs' not yet implemented\n");
 }
 
 // transfer Y to accumulator
-void tya(Cpu *cpu, byte *mem, byte op) {
+void tya(Cpu *cpu, byte *mem) {
     //printf("Instruction 'tya' not yet implemented\n");
 }
 
 // null function
-void xxx(Cpu *cpu, byte *mem, byte op) {
+void xxx(Cpu *cpu, byte *mem) {
     //printf("Instruction 'xxx' not yet implemented\n");
 }
 
@@ -606,13 +667,13 @@ const Opcode opcodes[256] = {
 
 /*
    
-        byte carry = GET_FLAG(cpu->f, FLG_C);
+        byte carry = GET_BIT(cpu->f, FLAG_C);
         // N and Z flags are set based on the binary addition
-        byte binary_add = cpu->a + op + carry;
+        byte binary_add = cpu->a + cpu->op + carry;
         if (binary_add == 0) {
-            SET_FLAG(cpu->f, FLG_Z);
+            SET_BIT(cpu->f, FLAG_Z);
         } else {
-            CLR_FLAG(cpu->f, FLG_Z);
+            CLR_BIT(cpu->f, FLAG_Z);
         }
         nz_flags(cpu, binary_add);
 
@@ -627,14 +688,14 @@ const Opcode opcodes[256] = {
 
         // Now set N and V flags
         if (SIGN(hi) == 1) {
-            SET_FLAG(cpu->f, FLG_N);
+            SET_BIT(cpu->f, FLAG_N);
         } else {
-            CLR_FLAG(cpu->f, FLG_N);
+            CLR_BIT(cpu->f, FLAG_N);
         }
         if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(op) != SIGN(hi))) {
-            SET_FLAG(cpu->f, FLG_V);
+            SET_BIT(cpu->f, FLAG_V);
         } else {
-            CLR_FLAG(cpu->f, FLG_V);
+            CLR_BIT(cpu->f, FLAG_V);
         }
 
         if (hi > 0x90) hi += 0x60;
@@ -646,15 +707,15 @@ const Opcode opcodes[256] = {
         // Carry from low nibble to high
         if (lsn > 9) {
             lsn = (lsn + 0x06) & 0x0f;
-            msn += 1;
+            msn++;
         }
 
         // Determine carry for high nibble
         if (msn > 9) {
             msn = (msn + 0x6) & 0x0f;
-            SET_FLAG(cpu->f, FLG_C);
+            SET_BIT(cpu->f, FLAG_C);
         } else {
-            CLR_FLAG(cpu->f, FLG_C);
+            CLR_BIT(cpu->f, FLAG_C);
         }
 
         // Store Result

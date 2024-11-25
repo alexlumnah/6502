@@ -79,27 +79,27 @@ bool check_state(Cpu *cpu, byte *mem, cJSON *state, bool verbose) {
 
             // Now determine which flags are off
             int f = (byte) cJSON_GetObjectItem(state, "p")->valueint;
-            if(GET_FLAG(cpu->f, FLG_C) != GET_FLAG(f, FLG_C))
+            if(GET_BIT(cpu->f, FLAG_C) != GET_BIT(f, FLAG_C))
                 printf("   C FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_C), GET_FLAG(f, FLG_C));
-            if(GET_FLAG(cpu->f, FLG_Z) != GET_FLAG(f, FLG_Z))
+                           GET_BIT(cpu->f, FLAG_C), GET_BIT(f, FLAG_C));
+            if(GET_BIT(cpu->f, FLAG_Z) != GET_BIT(f, FLAG_Z))
                 printf("   Z FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_Z), GET_FLAG(f, FLG_Z));
-            if(GET_FLAG(cpu->f, FLG_I) != GET_FLAG(f, FLG_I))
+                           GET_BIT(cpu->f, FLAG_Z), GET_BIT(f, FLAG_Z));
+            if(GET_BIT(cpu->f, FLAG_I) != GET_BIT(f, FLAG_I))
                 printf("   I FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_I), GET_FLAG(f, FLG_I));
-            if(GET_FLAG(cpu->f, FLG_D) != GET_FLAG(f, FLG_D))
+                           GET_BIT(cpu->f, FLAG_I), GET_BIT(f, FLAG_I));
+            if(GET_BIT(cpu->f, FLAG_D) != GET_BIT(f, FLAG_D))
                 printf("   D FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_D), GET_FLAG(f, FLG_D));
-            if(GET_FLAG(cpu->f, FLG_B) != GET_FLAG(f, FLG_B))
+                           GET_BIT(cpu->f, FLAG_D), GET_BIT(f, FLAG_D));
+            if(GET_BIT(cpu->f, FLAG_B) != GET_BIT(f, FLAG_B))
                 printf("   B FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_B), GET_FLAG(f, FLG_B));
-            if(GET_FLAG(cpu->f, FLG_V) != GET_FLAG(f, FLG_V))
+                           GET_BIT(cpu->f, FLAG_B), GET_BIT(f, FLAG_B));
+            if(GET_BIT(cpu->f, FLAG_V) != GET_BIT(f, FLAG_V))
                 printf("   V FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_V), GET_FLAG(f, FLG_V));
-            if(GET_FLAG(cpu->f, FLG_N) != GET_FLAG(f, FLG_N))
+                           GET_BIT(cpu->f, FLAG_V), GET_BIT(f, FLAG_V));
+            if(GET_BIT(cpu->f, FLAG_N) != GET_BIT(f, FLAG_N))
                 printf("   N FLAG State: %d, Expected: %d\n",
-                            GET_FLAG(cpu->f, FLG_N), GET_FLAG(f, FLG_N));
+                        GET_BIT(cpu->f, FLAG_N), GET_BIT(f, FLAG_N));
         }
 	}
 

@@ -32,11 +32,9 @@ bool exec(Cpu *cpu, byte *mem) {
 
     // TODO - Increment Cycles
 
-    // Grab operand
-    byte op = opc.addr(cpu, mem);
-
-    // Perform instruction
-    opc.inst(cpu, mem, op);
+    // Grab operand at address, do instruction
+    opc.addr(cpu, mem);
+    opc.inst(cpu, mem);
 
     return true;
 }
@@ -52,13 +50,13 @@ void dump_cpu(Cpu *cpu) {
     printf("    [SP] =   0x%02x - %d\n", cpu->s, cpu->s);
     printf("    [SR] =   0x%02x - %d\n", cpu->f, cpu->f);
     printf("  Flags:\n");
-    printf("    [C] -> %d\n", GET_FLAG(cpu->f, FLG_C));
-    printf("    [Z] -> %d\n", GET_FLAG(cpu->f, FLG_Z));
-    printf("    [I] -> %d\n", GET_FLAG(cpu->f, FLG_I));
-    printf("    [D] -> %d\n", GET_FLAG(cpu->f, FLG_D));
-    printf("    [B] -> %d\n", GET_FLAG(cpu->f, FLG_B));
-    printf("    [V] -> %d\n", GET_FLAG(cpu->f, FLG_V));
-    printf("    [N] -> %d\n", GET_FLAG(cpu->f, FLG_N));
+    printf("    [C] -> %d\n", GET_FLAG(cpu->f, FLAG_C));
+    printf("    [Z] -> %d\n", GET_FLAG(cpu->f, FLAG_Z));
+    printf("    [I] -> %d\n", GET_FLAG(cpu->f, FLAG_I));
+    printf("    [D] -> %d\n", GET_FLAG(cpu->f, FLAG_D));
+    printf("    [B] -> %d\n", GET_FLAG(cpu->f, FLAG_B));
+    printf("    [V] -> %d\n", GET_FLAG(cpu->f, FLAG_V));
+    printf("    [N] -> %d\n", GET_FLAG(cpu->f, FLAG_N));
     printf("  Cycle Count: %ld\n", cpu->cycles);
     printf("}\n");
 }
