@@ -61,7 +61,7 @@ void nz_flags(Cpu *cpu, byte reg) {
 // Accumulator
 void acc(Cpu *cpu, byte *mem) {
 
-    cpu->impl = true;
+    cpu->acc_mode = true;
 
     // Return value stored in accumulator
     cpu->op = cpu->a;
@@ -70,7 +70,7 @@ void acc(Cpu *cpu, byte *mem) {
 // Absolute Address
 void aba(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Get operand from address from next two bytes
     cpu->addr = read_word(mem, cpu->p);
@@ -81,7 +81,7 @@ void aba(Cpu *cpu, byte *mem) {
 // Absolute, X-indexed
 void abx(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Get address from next two bytes
     cpu->addr = read_word(mem, cpu->p);
@@ -95,7 +95,7 @@ void abx(Cpu *cpu, byte *mem) {
 // Absolute, Y-indexed
 void aby(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Get address from next two bytes
     cpu->addr = read_word(mem, cpu->p);
@@ -109,7 +109,7 @@ void aby(Cpu *cpu, byte *mem) {
 // Immediate
 void imm(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Opcode is next immediate byte
     cpu->addr = cpu->p;
@@ -120,14 +120,14 @@ void imm(Cpu *cpu, byte *mem) {
 // Implied
 void imp(Cpu *cpu, byte *mem) {
     
-    // Opcode is implied by the instruction
-    cpu->impl = true;
+    // Opcode is acc_modeied by the instruction
+    cpu->acc_mode = true;
 }
 
 // Indirect
 void ind(Cpu *cpu, byte *mem) {
     
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Next two bytes are a pointer to an address
     word ptr = read_word(mem, cpu->p);
@@ -145,7 +145,7 @@ void ind(Cpu *cpu, byte *mem) {
 // X-indexed, Indirect
 void xin(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Zero page contains a table of addresses
     // Address of table is next byte
@@ -164,7 +164,7 @@ void xin(Cpu *cpu, byte *mem) {
 // Indirect, Y-indexed
 void yin(Cpu *cpu, byte *mem) {
     
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Pointer to first byte of 16-bit address
     word ptr = (word)mem[cpu->p];
@@ -179,7 +179,7 @@ void yin(Cpu *cpu, byte *mem) {
 // Relative
 void rel(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Next byte contains a signed offset
     cpu->addr = cpu->p;
@@ -190,7 +190,7 @@ void rel(Cpu *cpu, byte *mem) {
 // Zero Page
 void zpg(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Next byte contains location on zero page
     cpu->addr = mem[cpu->p];
@@ -201,7 +201,7 @@ void zpg(Cpu *cpu, byte *mem) {
 // Zero Page, X-Indexed
 void zpx(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Next byte contains location on zero page
     cpu->addr = mem[cpu->p];
@@ -215,7 +215,7 @@ void zpx(Cpu *cpu, byte *mem) {
 // Zero Page, Y-indexed
 void zpy(Cpu *cpu, byte *mem) {
 
-    cpu->impl = false;
+    cpu->acc_mode = false;
 
     // Next byte contains location on zero page
     cpu->addr = mem[cpu->p];
@@ -325,7 +325,7 @@ void asl(Cpu *cpu, byte *mem) {
     }
 
     // Store result
-    if (cpu->impl) {
+    if (cpu->acc_mode) {
         cpu->a = result;
     } else {
         mem[cpu->addr] = result;
@@ -617,7 +617,7 @@ void lsr(Cpu *cpu, byte *mem) {
     }
 
     // Store result
-    if (cpu->impl) {
+    if (cpu->acc_mode) {
         cpu->a = result;
     } else {
         mem[cpu->addr] = result;
@@ -678,7 +678,7 @@ void rol(Cpu *cpu, byte *mem) {
     }
 
     // Store result
-    if (cpu->impl) {
+    if (cpu->acc_mode) {
         cpu->a = result;
     } else {
         mem[cpu->addr] = result;
@@ -701,7 +701,7 @@ void ror(Cpu *cpu, byte *mem) {
     }
 
     // Store result
-    if (cpu->impl) {
+    if (cpu->acc_mode) {
         cpu->a = result;
     } else {
         mem[cpu->addr] = result;

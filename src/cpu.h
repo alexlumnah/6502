@@ -56,10 +56,10 @@ typedef struct {
     byte f;     // Status Flag Register
 
     // Internal State
-    bool impl;  // Implicit Address Mode?
-    word addr;  // Address of Operand (if not implicit)
-    byte op;    // Value of Operand (if not implicit)
-    long cycles;// CPU Cycles
+    bool acc_mode;  // Accumulator Address Mode?
+    word addr;      // Address of Operand (if not implicit or accumulator)
+    byte op;        // Value of Operand (if not implicit or accumulator)
+    long cycles;    // CPU Cycles
 
 } Cpu;
 
