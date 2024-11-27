@@ -23,22 +23,23 @@
 #define FLAG_V (6)   // Overflow Flag   (1 = Overflow Occurred)
 #define FLAG_N (7)   // Negative Flag   (1 = Result Negative)
 
+// Status Flag Bit Masks
+#define MASK_C (1 << FLAG_C)
+#define MASK_Z (1 << FLAG_Z)
+#define MASK_I (1 << FLAG_I)
+#define MASK_D (1 << FLAG_D)
+#define MASK_B (1 << FLAG_B)
+#define MASK_5 (1 << 5)
+#define MASK_V (1 << FLAG_V)
+#define MASK_N (1 << FLAG_N)
+
 // Status Flag Get/Set/Cear Macros
-#define GET_BIT(reg, bit) ((reg & (1 << bit)) >> bit)
-#define SET_BIT(reg, bit) (reg |=  (1 << bit))
-#define CLR_BIT(reg, bit) (reg &= ~(1 << bit))
+#define GET_BIT(reg, bit) (((reg) >> (bit)) & 1)
+#define SET_BIT(reg, bit)  ((reg) |=  (1 << (bit)))
+#define CLR_BIT(reg, bit)  ((reg) &= ~(1 << (bit)))
 
 // Other Useful Macros
-#define SIGN(byte) (byte >> 7)
-
-// Status Flag Bit Masks
-#define MSK_C (1 << FLAG_C)
-#define MSK_Z (1 << FLAG_Z)
-#define MSK_I (1 << FLAG_I)
-#define MSK_D (1 << FLAG_D)
-#define MSK_B (1 << FLAG_B)
-#define MSK_V (1 << FLAG_V)
-#define MSK_N (1 << FLAG_N)
+#define SIGN(byte) (((byte) >> 7) & 1)
 
 // Standard Data Sizes
 typedef uint8_t  byte;

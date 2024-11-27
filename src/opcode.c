@@ -18,6 +18,29 @@ word read_word_zp(byte *mem, word addr) {
     return mem[addr % 256] + (mem[(addr + 1) % 256] << 8);
 }
 
+// Push onto stack
+void push(Cpu *cpu, byte *mem, byte val) {
+    
+    mem[STACK_TOP + cpu->s--] = val;
+}
+
+// Pop from stack
+byte pop(Cpu *cpu, byte *mem) {
+
+    return mem[STACK_TOP + ++cpu->s];
+}
+
+// Pop status register from stack
+byte popf(Cpu *cpu, byte *mem) {
+
+    byte status = pop(cpu, mem);
+    // Ignore BRK bit, and keep bit 5 the same
+    status &= ~MASK_B;
+    status |= (cpu->f & MASK_5);
+
+    return status;
+}
+
 // Set N, Z Flags
 void nz_flags(Cpu *cpu, byte reg) {
 
@@ -383,9 +406,9 @@ void brk(Cpu *cpu, byte *mem) {
 
     // Push status and program counter
     cpu->p++;
-    mem[STACK_TOP + cpu->s--] = (cpu->p & 0xff00) >> 8;
-    mem[STACK_TOP + cpu->s--] = (cpu->p & 0x00ff);
-    mem[STACK_TOP + cpu->s--] = cpu->f;
+    push(cpu, mem, (cpu->p & 0xff00) >> 8);
+    push(cpu, mem, (cpu->p & 0x00ff));
+    push(cpu, mem, cpu->f);
 
     // Clear break flag and set interrupt disable
     CLR_BIT(cpu->f, FLAG_B);
@@ -540,153 +563,301 @@ void jmp(Cpu *cpu, byte *mem) {
 
 // jump subroutine
 void jsr(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'jsr' not yet implemented\n");
+
+    // Push first byte of pc - 1 first, then handle idio
+    cpu->p--;
+    push(cpu, mem, (cpu->p & 0xff00) >> 8);
+
+    // 6502 Idiosyncrasy - if address is located in stack
+    // it can be overwritten. Re-load address to handle.
+    cpu->p--;
+    aba(cpu, mem);
+    cpu->p--;
+
+    // Push second byte
+    push(cpu, mem, (cpu->p & 0x00ff));
+
+    // Set address to absolute value
+    cpu->p = cpu->addr;
 }
 
 // load accumulator
 void lda(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'lda' not yet implemented\n");
+
+    cpu->a = cpu->op;
+    nz_flags(cpu, cpu->a);
 }
 
 // load X
 void ldx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'ldx' not yet implemented\n");
+
+    cpu->x = cpu->op;
+    nz_flags(cpu, cpu->x);
 }
 
 // load Y
 void ldy(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'ldy' not yet implemented\n");
+
+    cpu->y = cpu->op;
+    nz_flags(cpu, cpu->y);
 }
 
 // logical shift right
 void lsr(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'lsr' not yet implemented\n");
+
+    // Calculate result
+    byte result = cpu->op >> 1;
+    
+    // Set flags
+    nz_flags(cpu, result);
+    if (cpu->op & 1) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
+
+    // Store result
+    if (cpu->impl) {
+        cpu->a = result;
+    } else {
+        mem[cpu->addr] = result;
+    }
 }
 
 // no operation
 void nop(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'nop' not yet implemented\n");
+    // Do nothing
 }
 
 // or with accumulator
 void ora(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'ora' not yet implemented\n");
+
+    cpu->a |= cpu->op;
+    nz_flags(cpu, cpu->a);
 }
 
 // push accumulator
 void pha(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'pha' not yet implemented\n");
+
+    push(cpu, mem, cpu->a);
 }
 
 // push processor status (SR)
 void php(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'php' not yet implemented\n");
+
+    // Set BRK bit when pushing
+    push(cpu, mem, cpu->f | MASK_B);
 }
 
 // pull accumulator
 void pla(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'pla' not yet implemented\n");
+
+    cpu->a = pop(cpu, mem);
+    nz_flags(cpu, cpu->a);
 }
 
 // pull processor status (SR)
 void plp(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'plp' not yet implemented\n");
+
+    cpu->f = popf(cpu, mem);
 }
 
 // rotate left
 void rol(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'rol' not yet implemented\n");
+
+    // Calculate result
+    byte carry = GET_BIT(cpu->f, FLAG_C);
+    byte result = (cpu->op << 1) + carry;
+    
+    // Set flags
+    nz_flags(cpu, result);
+    if (GET_BIT(cpu->op, 7) == 1) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
+
+    // Store result
+    if (cpu->impl) {
+        cpu->a = result;
+    } else {
+        mem[cpu->addr] = result;
+    }
 }
 
 // rotate right
 void ror(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'ror' not yet implemented\n");
+
+    // Calculate result
+    byte carry = GET_BIT(cpu->f, FLAG_C);
+    byte result = (cpu->op >> 1) + (carry << 7);
+    
+    // Set flags
+    nz_flags(cpu, result);
+    if (GET_BIT(cpu->op, 0) == 1) {
+        SET_BIT(cpu->f, FLAG_C);
+    } else {
+        CLR_BIT(cpu->f, FLAG_C);
+    }
+
+    // Store result
+    if (cpu->impl) {
+        cpu->a = result;
+    } else {
+        mem[cpu->addr] = result;
+    }
 }
 
 // return from interrupt
 void rti(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'rti' not yet implemented\n");
+
+    cpu->f  = popf(cpu, mem);
+    cpu->p  = pop(cpu, mem);
+    cpu->p += pop(cpu, mem) << 8;
 }
 
 // return from subroutine
 void rts(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'rts' not yet implemented\n");
+
+    cpu->p  = pop(cpu, mem);
+    cpu->p += pop(cpu, mem) << 8;
+    cpu->p += 1;
 }
 
 // subtract with carry
 void sbc(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sbc' not yet implemented\n");
-    // REMEMBER BCD Mode
+
+    // Calculate binary sum for both modes, set N and Z flags
+    byte carry = GET_BIT(cpu->f, FLAG_C);
+    byte diff = cpu->a - cpu->op - !carry;
+
+    // Set flags - same for both binary and decimal
+    nz_flags(cpu, diff);
+    
+    // Carry Flag - Cleared if it was used for subtraction
+    if ((cpu->op + !carry) > cpu->a) {
+        CLR_BIT(cpu->f, FLAG_C);
+    } else {
+        SET_BIT(cpu->f, FLAG_C);
+    }
+
+    // Overflow Flag - Treat like addition of two's complement
+    if ((SIGN(cpu->a) == !SIGN(cpu->op)) &&
+        (SIGN(cpu->a) != SIGN(diff))) {
+        SET_BIT(cpu->f, FLAG_V);
+    } else {
+        CLR_BIT(cpu->f, FLAG_V);
+    }
+
+
+    // Binary Mode
+    if (GET_BIT(cpu->f, FLAG_D) == 0) {
+
+        // Store Results
+        cpu->a = diff;
+
+    // BCD Mode
+    } else { 
+
+        // Operate on lo and hi nibble separately
+        byte lo = (cpu->a & 0x0f) - (cpu->op & 0x0f) - !carry;
+        byte hi = (((cpu->a & 0xf0) >> 4) - ((cpu->op & 0xf0) >> 4));
+
+        // Carry from lo nibble to hi if overflowing
+        if (GET_BIT(lo, 4) == 1) {
+            lo += 10;
+            hi--;
+        }
+        // Correct overflow in hi nibble
+        if (GET_BIT(hi, 4) == 1) {
+            hi += 10;
+        }
+
+        // Store result
+        cpu->a = (hi << 4) + (lo & 0x0f);
+    }
 }
 
 // set carry
 void sec(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sec' not yet implemented\n");
+    
+    SET_BIT(cpu->f, FLAG_C);
 }
 
 // set decimal
 void sed(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sed' not yet implemented\n");
+    
+    SET_BIT(cpu->f, FLAG_D);
 }
 
 // set interrupt disable
 void sei(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sei' not yet implemented\n");
+    
+    SET_BIT(cpu->f, FLAG_I);
 }
 
 // store accumulator
 void sta(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sta' not yet implemented\n");
+    
+    mem[cpu->addr] = cpu->a;
 }
 
 // store X
 void stx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'stx' not yet implemented\n");
+
+    mem[cpu->addr] = cpu->x;
 }
 
 // store Y
 void sty(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'sty' not yet implemented\n");
+
+    mem[cpu->addr] = cpu->y;
 }
 
 // transfer accumulator to X
 void tax(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'tax' not yet implemented\n");
+    
+    cpu->x = cpu->a;
+    nz_flags(cpu, cpu->x);
 }
 
 // transfer accumulator to Y
 void tay(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'tay' not yet implemented\n");
-}
-
-// test and set memory bits with ac
-void tsb(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'tsb' not yet implemented\n");
+    
+    cpu->y = cpu->a;
+    nz_flags(cpu, cpu->y);
 }
 
 // transfer stack pointer to X
 void tsx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'tsx' not yet implemented\n");
+
+    cpu->x = cpu->s;
+    nz_flags(cpu, cpu->x);
 }
 
 // transfer X to accumulator
 void txa(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'txa' not yet implemented\n");
+
+    cpu->a = cpu->x;
+    nz_flags(cpu, cpu->a);
 }
 
 // transfer X to stack pointer
 void txs(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'txs' not yet implemented\n");
+
+    cpu->s = cpu->x;
 }
 
 // transfer Y to accumulator
 void tya(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'tya' not yet implemented\n");
+
+    cpu->a = cpu->y;
+    nz_flags(cpu, cpu->a);
 }
 
 // null function
 void xxx(Cpu *cpu, byte *mem) {
-    //printf("Instruction 'xxx' not yet implemented\n");
+    // Do nothing
 }
 
 const Opcode opcodes[256] = {
@@ -707,62 +878,4 @@ const Opcode opcodes[256] = {
 	{&cpx, &imm, 5},{&sbc, &xin, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&cpx, &zpg, 5},{&sbc, &zpg, 5},{&inc, &zpg, 5},{&xxx, &xad, 0},{&inx, &imp, 5},{&sbc, &imm, 5},{&nop, &imp, 5},{&xxx, &xad, 0},{&cpx, &aba, 5},{&sbc, &aba, 5},{&inc, &aba, 5},{&xxx, &xad, 0},
 	{&beq, &rel, 5},{&sbc, &yin, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&xxx, &xad, 0},{&sbc, &zpx, 5},{&inc, &zpx, 5},{&xxx, &xad, 0},{&sed, &imp, 5},{&sbc, &aby, 5},{&xxx, &xad, 0},{&xxx, &xad, 0},{&xxx, &xad, 0},{&sbc, &abx, 5},{&inc, &abx, 5},{&xxx, &xad, 0}
 };
-
-/*
-   
-        byte carry = GET_BIT(cpu->f, FLAG_C);
-        // N and Z flags are set based on the binary addition
-        byte binary_add = cpu->a + cpu->op + carry;
-        if (binary_add == 0) {
-            SET_BIT(cpu->f, FLAG_Z);
-        } else {
-            CLR_BIT(cpu->f, FLAG_Z);
-        }
-        nz_flags(cpu, binary_add);
-
-        // Carry from low nibble to hi, if lo > 9
-        byte lo = (cpu->a & 0x0f) + (op & 0x0f) + carry;
-        byte hi = (cpu->a & 0xf0) + (op & 0xf0); 
-
-        if (lo > 0x09) {
-            hi += 0x10;
-            lo += 0x06;
-        }
-
-        // Now set N and V flags
-        if (SIGN(hi) == 1) {
-            SET_BIT(cpu->f, FLAG_N);
-        } else {
-            CLR_BIT(cpu->f, FLAG_N);
-        }
-        if ((SIGN(cpu->a) == SIGN(op)) && (SIGN(op) != SIGN(hi))) {
-            SET_BIT(cpu->f, FLAG_V);
-        } else {
-            CLR_BIT(cpu->f, FLAG_V);
-        }
-
-        if (hi > 0x90) hi += 0x60;
-
-        // Add least significant and most significant nibbles
-        byte lsn = (cpu->a & 0x0f) + (op & 0x0f) + carry;
-        byte msn = (((cpu->a & 0xf0) >> 4) + ((op & 0xf0) >> 4));
-
-        // Carry from low nibble to high
-        if (lsn > 9) {
-            lsn = (lsn + 0x06) & 0x0f;
-            msn++;
-        }
-
-        // Determine carry for high nibble
-        if (msn > 9) {
-            msn = (msn + 0x6) & 0x0f;
-            SET_BIT(cpu->f, FLAG_C);
-        } else {
-            CLR_BIT(cpu->f, FLAG_C);
-        }
-
-        // Store Result
-        cpu->a = (msn << 4) + lsn;
-
-        */
 
