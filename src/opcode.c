@@ -61,6 +61,8 @@ void nz_flags(Cpu *cpu, byte reg) {
 // Accumulator
 void acc(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     cpu->acc_mode = true;
 
     // Return value stored in accumulator
@@ -120,6 +122,8 @@ void imm(Cpu *cpu, byte *mem) {
 // Implied
 void imp(Cpu *cpu, byte *mem) {
     
+    (void) mem;     // Suppress warnings
+
     // Opcode is acc_modeied by the instruction
     cpu->acc_mode = true;
 }
@@ -228,6 +232,10 @@ void zpy(Cpu *cpu, byte *mem) {
 
 // Null Addressing Mode - invalid opcode
 void xad(Cpu *cpu, byte *mem) {
+
+    (void) cpu;     // Suppress warnings
+    (void) mem;     // Suppress warnings
+
     assert("Invalid opcode\n");
 }
 
@@ -235,6 +243,8 @@ void xad(Cpu *cpu, byte *mem) {
 // Instructions
 // add with carry
 void adc(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     // Calculate binary sum for both modes, set N and Z flags
     byte carry = GET_BIT(cpu->f, FLAG_C);
@@ -305,6 +315,8 @@ void adc(Cpu *cpu, byte *mem) {
 
 // and (with accumulator)
 void and(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     cpu->a = cpu->a & cpu->op;
     nz_flags(cpu, cpu->a);
@@ -334,6 +346,8 @@ void asl(Cpu *cpu, byte *mem) {
 
 // branch on carry clear
 void bcc(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     if (GET_BIT(cpu->f, FLAG_C) == 0)
         cpu->p += (int8_t)cpu->op;
@@ -342,6 +356,8 @@ void bcc(Cpu *cpu, byte *mem) {
 // branch on carry set
 void bcs(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     if (GET_BIT(cpu->f, FLAG_C) == 1)
         cpu->p += (int8_t)cpu->op;
 }
@@ -349,12 +365,16 @@ void bcs(Cpu *cpu, byte *mem) {
 // branch on equal (zero set)
 void beq(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     if (GET_BIT(cpu->f, FLAG_Z) == 1)
         cpu->p += (int8_t)cpu->op;
 }
 
 // bit test
 void bit(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     byte result = cpu->a & cpu->op;
 
@@ -381,6 +401,8 @@ void bit(Cpu *cpu, byte *mem) {
 // branch on minus (negative set)
 void bmi(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     if (GET_BIT(cpu->f, FLAG_N) == 1)
         cpu->p += (int8_t)cpu->op;
 }
@@ -388,12 +410,16 @@ void bmi(Cpu *cpu, byte *mem) {
 // branch on not equal (zero clear)
 void bne(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     if (GET_BIT(cpu->f, FLAG_Z) == 0)
         cpu->p += (int8_t)cpu->op;
 }
 
 // branch on plus (negative clear)
 void bpl(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     if (GET_BIT(cpu->f, FLAG_N) == 1)
         cpu->p += (int8_t)cpu->op;
@@ -421,12 +447,16 @@ void brk(Cpu *cpu, byte *mem) {
 // branch on overflow clear
 void bvc(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     if (GET_BIT(cpu->f, FLAG_V) == 0)
         cpu->p += (int8_t)cpu->op;
 }
 
 // branch on overflow set
 void bvs(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     if (GET_BIT(cpu->f, FLAG_V) == 1)
         cpu->p += (int8_t)cpu->op;
@@ -435,11 +465,15 @@ void bvs(Cpu *cpu, byte *mem) {
 // clear carry
 void clc(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     CLR_BIT(cpu->f, FLAG_C);
 }
 
 // clear decimal
 void cld(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     CLR_BIT(cpu->f, FLAG_D);
 }
@@ -447,17 +481,23 @@ void cld(Cpu *cpu, byte *mem) {
 // clear interrupt disable
 void cli(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     CLR_BIT(cpu->f, FLAG_I);
 }
 
 // clear overflow
 void clv(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     CLR_BIT(cpu->f, FLAG_V);
 }
 
 // compare (with accumulator)
 void cmp(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     byte result = cpu->a - cpu->op;
 
@@ -473,6 +513,8 @@ void cmp(Cpu *cpu, byte *mem) {
 // compare with X
 void cpx(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     byte result = cpu->x - cpu->op;
 
     // Flags
@@ -486,6 +528,8 @@ void cpx(Cpu *cpu, byte *mem) {
 
 // compare with Y
 void cpy(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     byte result = cpu->y - cpu->op;
 
@@ -509,6 +553,8 @@ void dec(Cpu *cpu, byte *mem) {
 // decrement X
 void dex(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     byte result = cpu->x - 1;
     nz_flags(cpu, result);
     cpu->x = result;
@@ -517,6 +563,8 @@ void dex(Cpu *cpu, byte *mem) {
 // decrement Y
 void dey(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     byte result = cpu->y - 1;
     nz_flags(cpu, result);
     cpu->y = result;
@@ -524,6 +572,8 @@ void dey(Cpu *cpu, byte *mem) {
 
 // exclusive or (with accumulator)
 void eor(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     byte result = cpu->a ^ cpu->op;
     nz_flags(cpu, result);
@@ -541,6 +591,8 @@ void inc(Cpu *cpu, byte *mem) {
 // increment X
 void inx(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     byte result = cpu->x + 1;
     nz_flags(cpu, result);
     cpu->x = result;
@@ -548,6 +600,8 @@ void inx(Cpu *cpu, byte *mem) {
 
 // increment Y
 void iny(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     byte result = cpu->y + 1;
     nz_flags(cpu, result);
@@ -557,12 +611,16 @@ void iny(Cpu *cpu, byte *mem) {
 // jump
 void jmp(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     // Jump to absolute or indirect address
     cpu->p = cpu->addr;
 }
 
 // jump subroutine
 void jsr(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     // Push first byte of pc - 1 first, then handle idio
     cpu->p--;
@@ -584,12 +642,16 @@ void jsr(Cpu *cpu, byte *mem) {
 // load accumulator
 void lda(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     cpu->a = cpu->op;
     nz_flags(cpu, cpu->a);
 }
 
 // load X
 void ldx(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     cpu->x = cpu->op;
     nz_flags(cpu, cpu->x);
@@ -598,12 +660,16 @@ void ldx(Cpu *cpu, byte *mem) {
 // load Y
 void ldy(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     cpu->y = cpu->op;
     nz_flags(cpu, cpu->y);
 }
 
 // logical shift right
 void lsr(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     // Calculate result
     byte result = cpu->op >> 1;
@@ -627,10 +693,14 @@ void lsr(Cpu *cpu, byte *mem) {
 // no operation
 void nop(Cpu *cpu, byte *mem) {
     // Do nothing
+    (void) cpu;
+    (void) mem;
 }
 
 // or with accumulator
 void ora(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     cpu->a |= cpu->op;
     nz_flags(cpu, cpu->a);
@@ -639,11 +709,15 @@ void ora(Cpu *cpu, byte *mem) {
 // push accumulator
 void pha(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     push(cpu, mem, cpu->a);
 }
 
 // push processor status (SR)
 void php(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     // Set BRK bit when pushing
     push(cpu, mem, cpu->f | MASK_B);
@@ -727,6 +801,8 @@ void rts(Cpu *cpu, byte *mem) {
 // subtract with carry
 void sbc(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     // Calculate binary sum for both modes, set N and Z flags
     byte carry = GET_BIT(cpu->f, FLAG_C);
     byte diff = cpu->a - cpu->op - !carry;
@@ -780,24 +856,32 @@ void sbc(Cpu *cpu, byte *mem) {
 
 // set carry
 void sec(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     SET_BIT(cpu->f, FLAG_C);
 }
 
 // set decimal
 void sed(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     SET_BIT(cpu->f, FLAG_D);
 }
 
 // set interrupt disable
 void sei(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     SET_BIT(cpu->f, FLAG_I);
 }
 
 // store accumulator
 void sta(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     mem[cpu->addr] = cpu->a;
 }
@@ -805,17 +889,23 @@ void sta(Cpu *cpu, byte *mem) {
 // store X
 void stx(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     mem[cpu->addr] = cpu->x;
 }
 
 // store Y
 void sty(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     mem[cpu->addr] = cpu->y;
 }
 
 // transfer accumulator to X
 void tax(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     cpu->x = cpu->a;
     nz_flags(cpu, cpu->x);
@@ -823,6 +913,8 @@ void tax(Cpu *cpu, byte *mem) {
 
 // transfer accumulator to Y
 void tay(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
     
     cpu->y = cpu->a;
     nz_flags(cpu, cpu->y);
@@ -831,12 +923,16 @@ void tay(Cpu *cpu, byte *mem) {
 // transfer stack pointer to X
 void tsx(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     cpu->x = cpu->s;
     nz_flags(cpu, cpu->x);
 }
 
 // transfer X to accumulator
 void txa(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     cpu->a = cpu->x;
     nz_flags(cpu, cpu->a);
@@ -845,11 +941,15 @@ void txa(Cpu *cpu, byte *mem) {
 // transfer X to stack pointer
 void txs(Cpu *cpu, byte *mem) {
 
+    (void) mem;     // Suppress warnings
+
     cpu->s = cpu->x;
 }
 
 // transfer Y to accumulator
 void tya(Cpu *cpu, byte *mem) {
+
+    (void) mem;     // Suppress warnings
 
     cpu->a = cpu->y;
     nz_flags(cpu, cpu->a);
@@ -857,6 +957,9 @@ void tya(Cpu *cpu, byte *mem) {
 
 // null function
 void xxx(Cpu *cpu, byte *mem) {
+
+    (void) cpu;     // Suppress warnings
+    (void) mem;     // Suppress warnings
     // Do nothing
 }
 

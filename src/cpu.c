@@ -30,7 +30,8 @@ bool exec(Cpu *cpu, byte *mem) {
     Opcode opc = opcodes[mem[cpu->p]];
     cpu->p++;
 
-    // TODO - Increment Cycles
+    // TODO - Increment Cycles Accurately
+    cpu->cycles += opc.num_cycles;
 
     // Grab operand at address, do instruction
     opc.addr(cpu, mem);

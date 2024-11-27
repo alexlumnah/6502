@@ -2,9 +2,7 @@
 CC = gcc
 
 # Compiler Flags:
-#  -g    adds debugging information to the executable file
-#  -Wall turns on most, but not all, compiler warnings
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -Wpedantic -Wextra
 
 SRC = $(wildcard src/*.c)
 OBJ  = $(SRC:.c=.o)
@@ -16,10 +14,10 @@ TEST_OBJ = $(TEST_SRC:.c=.o)
 all: dir main test
 
 main: $(OBJ)
-	$(CC) -o $(BIN)/main $^
+	$(CC) -o $(BIN)/main $^ $(CFLAGS)
 
 test: $(TEST_OBJ) src/cpu.o src/opcode.o
-	$(CC) -o $(BIN)/test $^
+	$(CC) -o $(BIN)/test $^ $(CFLAGS)
 
 dir:
 	mkdir -p ./$(BIN)

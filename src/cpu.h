@@ -48,12 +48,12 @@ typedef uint16_t word;
 // CPU Structure
 typedef struct {
     // Registers
-    word p;     // Program Counter
-    byte a;     // Accumulator
-    byte x;     // X Register
-    byte y;     // Y Register
-    byte s;     // Stack Pointer
-    byte f;     // Status Flag Register
+    word p;         // Program Counter
+    byte a;         // Accumulator
+    byte x;         // X Register
+    byte y;         // Y Register
+    byte s;         // Stack Pointer
+    byte f;         // Status Flag Register
 
     // Internal State
     bool acc_mode;  // Accumulator Address Mode?
